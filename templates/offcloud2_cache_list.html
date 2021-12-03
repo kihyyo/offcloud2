@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block content %}
+
+<form id="form_search" class="form-inline" style="text-align:left">
+  <div class="container-fluid">
+    <div class="row show-grid">
+      <span class="col-md-3">
+        <select id="type" name="type" class="form-control form-control-sm">
+          <option value="all">전체</option>
+          {% for item in arg['type'] %}
+            <option value="{{ item }}">{{item}}</option>
+          {% endfor %}
+        </select>
+      </span>
+      <span class="col-md-9">
+        <input id="search_word" name="search_word" class="form-control form-control-sm w-75" type="text" placeholder="" aria-label="Search">
+        <button id="search" class="btn btn-sm btn-outline-success">검색</button>
+        <button id="reset_btn" class="btn btn-sm btn-outline-success">리셋</button>
+        
+      </span>
+      
+  </div>
+</form>
+<div id='page1'></div>
+
+{{ macros.m_hr_head_top() }}
+{{ macros.m_row_start('0') }}
+{{ macros.m_col(1,  macros.m_strong('ID')) }}
+{{ macros.m_col(5,  macros.m_strong('Title')) }}
+{{ macros.m_col(3,  macros.m_strong('Magnet')) }}
+{{ macros.m_col(3,  macros.m_strong('Action')) }}
+{{ macros.m_row_end() }}
+{{ macros.m_hr_head_bottom() }}
+<div id="list_div"></div>
+<div id='page2'></div>
+
+<script type="text/javascript">
+var package_name = "{{arg['package_name'] }}";
+var current_data = null;
+
+
+
+
+
+function request_search(page) {
+  var formData = get_formdata('#form_search')
+  formData += '&page=' + page;
+  $.ajax({
+    url: '/' + package_name + '/ajax/cache_list',
+    type: "POST", 
+    cache: false,
+    data: formData,
+    dataType: "json",
+    success: function (data) {
+      current_data = data;
+      window.scrollTo(0,0);
+      make_list(data.list)
+      make_page_html(data.paging)
+    }
+  });
+}  
+
+
+
+
+
+
+
+
+$(document).ready(function(){
+  request_search('1');
+});
+
+$("#search").click(function(e) {
+  e.preventDefault();
+  request_search('1');
+});
+
+$("body").on('click', '#page', function(e){
+  e.preventDefault();
+  request_search($(this).data('page'));
+});
+
+
+$("body").on('click', '#add_remote_btn', function(e) {
+  e.preventDefault();
+  id = $(this).data('id')
+  $.ajax({
+    url: '/' + package_name + '/ajax/cache_download_bot',
+    type: "POST", 
+    cache: false,
+    data: {id:id},
+    dataType: "json",
+    success: function (data) {
+      m_modal(data)
+    }
+  });
+});
+
+
+
+function make_list(data) {
+  str = ''
+  for (i in data) {
+    //console.log(data[i]);
+    str += m_row_start();
+    str += m_col(1, data[i].id);
+    str += m_col(2, data[i].created_time);
+    tmp = data[i].content_type + '<br>파일수:' + data[i].file_count + '<br>크기' + humanFileSize(data[i].size);
+    str += m_col(2, tmp);
+
+    tmp = data[i].name + '<br>'
+    tmp += '<a href="' + data[i].magnet + ' target="_blank">' + data[i].magnet + '</a><br>';    
+    tmp2 = m_button('global_offcloud_add_btn', 'Offcloud 추가', [{'key':'hash', 'value':data[i].magnet}]);
+    tmp2 += m_button('global_offcloud_cache_confirm_btn', '캐쉬 확인', [{'key':'hash', 'value':data[i].magnet}]);
+    tmp2 = m_button_group(tmp2)
+
+    tmp3 = ''
+    content_type = document.getElementById("type").value;
+    if (content_type == 'JAV_CENSORED_DMM' && data[i].content_type == 'JAV_CENSORED_DMM') {
+      tmp3 = '<br><img src="' + data[i].content_info.poster + '" class="img-fluid">'
+      tmp3 += '<br>[' + data[i].content_info.id + '] ' + data[i].content_info.title
+    } else if (content_type == 'JAV_CENSORED_JAVDB' && data[i].content_type == 'JAV_CENSORED_JAVDB') {
+      tmp3 = '<br><img src="' + data[i].content_info.poster + '" class="img-fluid">'
+      tmp3 += '<br>' + data[i].content_info.title
+    } else if (content_type == 'KTV' && data[i].content_type == 'KTV') {
+      if (data[i].content_info.daum != null) {
+        tmp3 = '<br><img src="' + data[i].content_info.daum.poster_url + '" class="img-fluid">'
+        tmp3 += '<br>' + data[i].content_info.daum.title
+      }
+    } else if (content_type == 'MOVIE' && data[i].content_type == 'MOVIE') {
+      if (data[i].content_info.movie.more != null) {
+        tmp3 = '<br><img src="' + data[i].content_info.movie.more.poster + '" class="img-fluid">'
+        tmp3 += '<br>' + data[i].content_info.movie.title
+      }
+    }
+    str += m_col(7, tmp + tmp2 + tmp3);
+
+    str += m_row_end();
+    if (i != data.length -1) str += m_hr();
+  }
+  document.getElementById("list_div").innerHTML = str;
+
+  
+}
+
+</script>    
+{% endblock %}

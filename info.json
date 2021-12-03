@@ -1,0 +1,10 @@
+{
+    "version": "0.1.0.0",
+    "name": "offcloud2",
+    "category_name": "torrent",
+    "developer": "soju6jan, summer",
+    "description": "Offcloud2 이용 플러그인 forked by summer",
+    "home": "https://github.com/ei8/offcloud2",
+    "more": "",
+    "category": "torrent"
+}

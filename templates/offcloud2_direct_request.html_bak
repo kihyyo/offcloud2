@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block content %}
+<div>
+  <form id="cache_setting">
+    {{ macros.setting_input_text_and_buttons('hash', 'Hash', [['cache_btn', '캐쉬여부 확인']], value='', desc='마그넷 or hash') }}
+    {{ macros.setting_select_empty('default_username', '계정 선택', desc='다운로드 계정. 계정설정의 Username', col='6') }}
+    {{ macros.setting_input_text('folder_id', 'FolderID', value=arg['default_folder_id']) }}
+    <!--{{ macros.setting_select_empty('upload_folder_list', '업로드 폴더 선택', desc='FolderID에 직접입력 가능', col='6') }}-->
+    <!--{{ macros.setting_input_textarea('upload_folder_list', '업로드 폴더 리스트', desc=['업로드 폴더를 선택할 수 있도록 미리 지정합니다.', '형식 : 이름 = 구글드라이브 Folder Id', '예) 4K리먹스 = 1MsCuJ-Ql05At-w_Pfeao_RXn86-untHy3ed'], value=arg['upload_folder_list'], row='12') }}-->
+    {{ macros.setting_button([['request_download_btn', '다운로드 추가']]) }}
+  </form>
+</div>
+
+
+<script type="text/javascript">
+var package_name = "{{arg['package_name'] }}";
+var default_username = "{{arg['default_username']}}";
+var current_data;
+
+
+$(document).ready(function(){
+  $.ajax({
+    url: '/' + package_name + '/ajax/accounts',
+    type: "POST", 
+    cache: false,
+    data:{},
+    dataType: "json",
+    success: function (data) {
+      current_data = data;
+      make_select(data);
+    }
+  });
+});
+
+function make_select(data) {
+  console.log(data)
+  str = '<select id="default_username" name="default_username" class="form-control form-control-sm">';
+  str += '<option value="all">================</option>';
+  for(var i in data) {
+    if (data[i].username == default_username) {
+      str += '<option value="' + data[i].username + '" selected>' + data[i].username + '</option>';
+    } else {
+      str += '<option value="' + data[i].username + '">' + data[i].username + '</option>';
+    }
+  }
+  str += '</select>'
+  document.getElementById("default_username_div").innerHTML = str;
+}
+
+// $(document).ready(function(){
+// //   console.log(data)
+//   str = '<select id="upload_folder_list" name="upload_folder_list" class="form-control form-control-sm">';
+//   str += '<option value="all">================</option>';
+//   for(var i in upload_folder_list) {
+//     if (data[i].name == default_username) {
+//       str += '<option value="' + data[i].username + '" selected>' + data[i].username + '</option>';
+//     } else {
+//       str += '<option value="' + data[i].username + '">' + data[i].username + '</option>';
+//     }
+//   }
+//   str += '</select>'
+//   document.getElementById("default_username_div").innerHTML = str;
+// }
+
+
+$("body").on('click', '#cache_btn', function(e){
+  e.preventDefault();
+  hash = document.getElementById("hash").value;
+  if (hash == '') {
+    $.notify('<strong>hash를 입력하세요</strong>', {
+      type: 'warning'
+    });
+    return;
+  }
+  $.ajax({
+    url: '/' + package_name + '/ajax/hash',
+    type: "POST", 
+    cache: false,
+    data:{hash:hash},
+    dataType: "json",
+    success: function (data) {
+      if (data == 'true') {
+        $.notify('<strong>캐쉬 되어 있습니다.</strong>', {
+          type: 'success'
+        });
+      } else if (data == 'false') {
+        $.notify('<strong>캐쉬 되어 있지 않습니다.</strong>', {
+          type: 'warning'
+        });
+      } else if (data == 'fail') {
+        $.notify('<strong>캐쉬 확인 실패</strong>', {
+          type: 'warning'
+        });
+      }
+    }
+  });
+});
+
+
+$("body").on('click', '#request_download_btn', function(e){
+  e.preventDefault();
+  var formData = get_formdata('#cache_setting');
+  $.ajax({
+      url: '/' + package_name + '/ajax/request_download',
+      type: "POST", 
+      cache: false,
+      data:formData,
+      dataType: "json",
+      success: function (data) {
+        document.getElementById("modal_title").innerHTML = "요청 결과";
+        document.getElementById("modal_body").innerHTML = "<pre>"+JSON.stringify(data, null, 2) + "</pre>";
+        $("#large_modal").modal();
+      }
+    });
+});
+
+/*
+if ( "{{arg['magnet']}}" != "None" ) {
+  document.getElementById("hash").value = "{{arg['magnet']}}";
+  document.getElementById("cache_btn").click();
+}
+*/
+
+</script>    
+{% endblock %}

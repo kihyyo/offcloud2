@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+{% block content %}
+<div>
+  {{ macros.m_row_start() }}  
+  {{ macros.m_button('add_job_btn', '작업 추가') }}
+  {{ macros.m_row_end() }}  
+
+  {{ macros.m_hr_head_top() }}
+  {{ macros.m_row_start('0') }}
+  {{ macros.m_col(1, macros.m_strong('ID')) }}
+  {{ macros.m_col(4, macros.m_strong('RSS')) }}
+  {{ macros.m_col(1, macros.m_strong('Interval')) }}
+  {{ macros.m_col(1, macros.m_strong('Account')) }}
+  {{ macros.m_col(4, macros.m_strong('Folder ID')) }}
+  {{ macros.m_col(1, macros.m_strong('Action')) }}
+  {{ macros.m_row_end() }}
+  {{ macros.m_hr_head_bottom() }}
+  <div id="job_list_div"></div>
+</div> <!--전체-->
+
+
+<!-- Modal -->
+{{ macros.m_modal_start('job_modal', '작업 추가', 'modal-lg') }}
+  <form id="job_form">
+  <input type="hidden" id="job_id" name="job_id"/>
+  {{ macros.setting_input_text('job_name', 'Name', col='4', desc=['API에서 사용할 이름']) }}
+  {{ macros.setting_input_text_and_buttons('job_rss_url', 'RSS URL', [['job_test_rss_btn', '링크']]) }}
+  {{ macros.setting_checkbox('job_rss_mode', 'RSS 매칭 모드', desc=['On : 화이트리스트 모드, Off : 블랙리스트 모드']) }}
+  {{ macros.setting_input_textarea('job_rss_regex', 'RSS 매칭 정규식', row='5', desc=['화이트리스트 and 정규식 없음 : 전체 추가되지 않음', '화이트리스트 and 정규식 매칭 : 매칭시 추가', '블랙리스트 and 정규식 없음 : 모두 받음', '블랙리스트 and 정규식 매칭 : 매칭된 피드만 제외하고 모두 추가', '구분자 엔터']) }}
+  {{ macros.setting_select_empty('job_username', '계정', col='6') }}
+  {{ macros.setting_input_textarea('job_username2', '계정 분산', desc=['https://offcloud.com/#/account에서 Remote accounts에 등록한 username을 입력' , 'Enter로 구분. 다운로드 1건 마다 각계정이 순서대로 사용됨' , '비워두면 [계정]에서 선택된 한개의 계정만 사용'], row='5') }}
+  {{ macros.setting_input_text('job_folderid', 'Folder ID') }}
+  {{ macros.setting_radio('job_mode', '다운로드 모드', ['Cache만 받기', '전체 받기', 'Cache 확인만']) }}
+  {{ macros.setting_input_int('job_cache_confirm_day', 'Cache 확인 기간', desc='day 단위') }}
+  {{ macros.setting_input_int('job_add_to_cloud', 'Cloud로 추가', desc=['다운로드 되지 않은 항목을 설정 시간(Hour) 지난후 Cloud로 추가', '0 으로 설정시 RSS수신시 바로 Cloud로 추가함 (Cloud로 모든항목 즉시 추가)', '값이 없으면 off']) }}
+  {{ macros.setting_checkbox('job_use_tracer', '다운로드 추적', desc=['Torrent Info 플러그인 설치 필수']) }}
+  <div id="job_use_tracer_div" class="collapse">
+  {{ macros.setting_input_text('job_mount_path', '마운트 경로', desc=None) }}
+  {{ macros.setting_input_text('job_move_path', '이동 경로', desc=['다운로드 완료 된 파일이나 폴더를 이동할 경로.']) }}
+  {{ macros.setting_input_text('job_call_job', '파일 이동 후 호출할 작업', desc=['아직 안됩니다.!!!', '플러그인명_ID. 구분자 | 또는 엔터', '예) rclone_5|command_2']) }}
+  </div>
+  {{ macros.setting_button([['job_save_btn', '저장'], ['job_remove_btn', '삭제']]) }}
+  </form>
+{{ macros.m_modal_end() }}
+
+
+<script type="text/javascript">
+var package_name = "{{arg['package_name'] }}";
+var current_data;
+
+$(document).ready(function(){
+  $.ajax({
+    url: '/' + package_name + '/ajax/job_list',
+    type: "POST", 
+    cache: false,
+    data:{},
+    dataType: "json",
+    success: function (data) {
+      current_data = data;
+      make_job_list(data.jobs);
+    }
+  });
+});
+
+
+
+function make_account_select(job_username) {
+  data = current_data.accounts
+  //console.log(job_username)
+  str = '<select id="job_username" name="job_username" class="form-control form-control-sm">';
+  str += '<option value="">================</option>';
+  for(var i in data) {
+    if (data[i].username == job_username) {
+      str += '<option value="' + data[i].username + '" selected>' + data[i].username + '</option>';
+    } else {
+      str += '<option value="' + data[i].username + '">' + data[i].username + '</option>';
+    }
+  }
+  str += '</select>'
+  document.getElementById("job_username_div").innerHTML = str;
+}
+
+
+// 잡 저장 버튼.. 추가일수도, 수정일수도..
+$("#job_save_btn").click(function(e) {
+  e.preventDefault();
+  var formData = get_formdata('#job_form');
+  console.log(formData)
+  $.ajax({
+    url: '/'+package_name+'/ajax/save_job',
+    type: "POST", 
+    cache: false,
+    data: formData,
+    dataType: "json",
+    success: function (data) {
+      current_data = data
+      make_job_list(data.jobs)
+      if (data.ret == 'success') {
+        $.notify('<strong>설정을 저장하였습니다.</strong>', {
+          type: 'success'
+        });
+        $("#job_modal").modal('hide');
+      } else if (data.ret == 'fail') {
+        $.notify('<strong>실패하였습니다.</strong>', {
+          type: 'warning'
+        });
+      }
+    }
+  });
+});
+
+
+function make_job_list(data) {
+  str = ''
+  for (i in data) {
+    //console.log(data[i])
+    str += m_row_start();
+    str += m_col(1, data[i].id);
+    str += m_col(2, data[i].created_time);
+    str += m_col(1, data[i].name);
+    str += m_col(2, data[i].rss_url);
+    str += m_col(1, data[i].username);
+    str += m_col(2, data[i].folderid);
+    tmp = '모드 : '
+    if (data[i].mode == '0') {
+      tmp += 'Cache만 받기'
+      tmp += '<br>Cache 확인 기간 : ' + data[i].cache_confirm_day
+    } else if (data[i].mode == '1') {
+      tmp += '전체 받기'
+    } else if (data[i].mode == '2') {
+      tmp += 'Cache 확인만'
+      tmp += '<br>Cache 확인 기간 : ' + data[i].cache_confirm_day
+    }
+    str += m_col(2, tmp);
+
+    tmp = m_button('job_setting_btn', '수정', [{'key':'id', 'value':data[i].id}]);
+    tmp = m_button_group(tmp)
+    str += m_col(1, tmp);
+    str += m_row_end();
+    if (i != data.length -1) str += m_hr();
+  }
+  document.getElementById("job_list_div").innerHTML = str;
+}
+
+
+// 추가
+$("body").on('click', '#add_job_btn', function(e){
+  e.preventDefault();
+  document.getElementById("job_id").value = -1
+  document.getElementById("job_name").value = ''
+  document.getElementById("job_rss_url").value = ''
+  $('#job_rss_mode').bootstrapToggle('off');
+  document.getElementById("job_rss_regex").value = ''
+
+  make_account_select('');
+  //document.getElementById("job_username").value = ''
+  document.getElementById("job_username2").value = ''
+  document.getElementById("job_folderid").value = ''
+  document.getElementById("job_cache_confirm_day").value = 7
+  document.getElementById("job_remove_btn").disabled = true;
+  $('input[name=job_mode]')[0].checked = true;
+  $('#job_use_tracer').bootstrapToggle('off');
+  document.getElementById("job_mount_path").value = ''
+  document.getElementById("job_move_path").value = ''
+  document.getElementById("job_call_job").value = ''
+  $('#job_use_tracer_div').collapse('hide')
+  $("#job_modal").modal()
+
+  // 추가기능 들
+  document.getElementById("job_add_to_cloud").value = ''
+});
+
+$('#job_use_tracer').change(function() {
+  use_collapse('job_use_tracer');
+});
+
+// 수정
+$("body").on('click', '#job_setting_btn', function(e){
+  e.preventDefault();
+  id = $(this).data('id')
+  for (i in current_data.jobs) {
+    if (id == current_data.jobs[i].id) {
+      document.getElementById("job_id").value = current_data.jobs[i].id;
+      document.getElementById("job_name").value = current_data.jobs[i].name;
+      document.getElementById("job_rss_url").value = current_data.jobs[i].rss_url;
+      if (current_data.jobs[i].rss_mode) {
+        $('#job_rss_mode').bootstrapToggle('on')
+      } else {
+        $('#job_rss_mode').bootstrapToggle('off')
+      }
+      document.getElementById("job_rss_regex").value = current_data.jobs[i].rss_regex;
+      make_account_select(current_data.jobs[i].username);
+      document.getElementById("job_username2").value = current_data.jobs[i].username2;
+      document.getElementById("job_folderid").value = current_data.jobs[i].folderid;
+      document.getElementById("job_cache_confirm_day").value = current_data.jobs[i].cache_confirm_day;
+      document.getElementById("job_remove_btn").disabled = false;
+      $('input[name=job_mode]').checked = false;
+      $('input[name=job_mode]')[parseInt(current_data.jobs[i].mode)].checked = true;
+      document.getElementById("job_mount_path").value = current_data.jobs[i].mount_path
+      document.getElementById("job_move_path").value = current_data.jobs[i].move_path
+      document.getElementById("job_call_job").value = current_data.jobs[i].call_job
+      
+      // 추가기능 들
+      document.getElementById("job_add_to_cloud").value = current_data.jobs[i].add_to_cloud
+
+      if (current_data.jobs[i].use_tracer) {
+        $('#job_use_tracer_div').collapse('show')
+        $('#job_use_tracer').bootstrapToggle('on')
+      } else {
+        $('#job_use_tracer_div').collapse('hide')
+        $('#job_use_tracer').bootstrapToggle('off')
+      }
+      break
+    }
+  }
+  $("#job_modal").modal();
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// 잡 삭제 버튼
+$("body").on('click', '#job_remove_btn', function(e){
+  e.preventDefault();
+  id = document.getElementById("job_id").value
+  $.ajax({
+    url: '/' + package_name + '/ajax/job_remove',
+    type: "POST", 
+    cache: false,
+    data: {id:id},
+    dataType: "json",
+    success: function (data) {
+      current_data = data
+      make_job_list(data.jobs)
+      if (data.ret == 'success') {
+        $.notify('<strong>삭제하였습니다.</strong>', {
+          type: 'success'
+        });
+        $("#job_modal").modal('hide');
+      } else if (data.ret == 'fail') {
+        $.notify('<strong>삭제 실패</strong>', {
+          type: 'warning'
+        });
+        //$("#job_modal").modal('hide');
+      }
+    }
+  });
+});
+
+// 링크
+$("body").on('click', '#job_test_rss_btn', function(e){
+  e.preventDefault();
+  url = document.getElementById("job_rss_url").value
+  window.open(url, "_blank");
+});
+
+
+
+
+
+</script>    
+{% endblock %}

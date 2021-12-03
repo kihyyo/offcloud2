@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div>
+  <nav> 
+    {{ macros.m_tab_head_start() }}
+      {{ macros.m_tab_head2('normal', '일반', true) }}
+      {{ macros.m_tab_head2('action', '기타', false) }}
+    {{ macros.m_tab_head_end() }} 
+  </nav>  
+  <form id='setting' name='setting'>
+  <div class="tab-content" id="nav-tabContent">
+     {{ macros.m_tab_content_start('normal', true) }}
+      {{ macros.setting_input_textarea('cache_save_type_list', 'DB에 저장할 타입', value=arg['cache_save_type_list'], desc=['해당하는 타입만 DB에 저장합니다.', '구분자 |', '빈칸 모두 저장', '지원타입 : KTV, KTV_ETC, MOVIE, MOVIE_ETC, MUSIC, SHOW, ANI, PROGRAM, JAV_CENSORED_DMM, JAV_CENSORED_JAVDB, JAV_CENSORED_ETC, JAV_UNCENSORED, AV_WEST, AV_EAST, ETC']) }}
+      {{ macros.setting_checkbox('cache_receive_info_send_telegram', '정보 수신시 알림', value=arg['cache_receive_info_send_telegram'], desc=['ID : offcloud2_cache_receive']) }}
+      {{ macros.setting_button([['global_setting_save_btn', '설정 저장']]) }}
+    {{ macros.m_tab_content_end() }}
+
+    {{ macros.m_tab_content_start('action', false) }}
+      {{ macros.setting_button([['global_reset_db_sub_btn', '목록 전체 지우기']], left='DB정리' ) }}
+      {{ macros.m_hr() }}
+      {{ macros.info_text_go('rss_api', 'RSS API', value=arg['rss_api'], desc=['파라미터', ' - search : 검색 제목. 연산자 지원', ' - type : 컨텐츠 타입. | 연산자 지원', '- count : 피드 수. 기본값 100', '- id_mod : 나눌 숫자_나머지. ID로 분할원할 경우' '', '연산자', '- AND 연산자 : 구분자 ,', '- OR연산자 : 구분자 |', '', '자세한 설정은 플러그인 설치 게시물 참고']) }}
+    {{ macros.m_tab_content_end() }}
+  </div><!--tab-content-->
+  </form>
+</div> <!--전체-->
+
+
+<script type="text/javascript">
+var package_name = "{{arg['package_name'] }}";
+var sub = "{{arg['sub']}}";
+var current_data;
+
+$(document).ready(function(){
+});
+
+
+</script>    
+{% endblock %}
