@@ -46,6 +46,10 @@ class Logic(object):
         'dedupe_on_remote' : 'False',
         'dedupe_on_cloud' : 'False',
 
+        # 20230331 새로 추가
+        'alt_download' : 'False',
+        'alt_download_time' : '4', 
+        'alt_upload_time' : '12',
         # cache
         'cache_save_type_list' : '',
         'cache_receive_info_send_telegram' : 'False'
