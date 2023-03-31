@@ -284,10 +284,10 @@ class LogicRss(object):
                             logger.debug('업로드 중지됨 - removed : %s === %s', result, item)                                
                     except: 
                         continue
-
         except Exception as e:
             logger.error(e)
             logger.error(traceback.format_exc())   
+            
     @staticmethod
     def scheduler_function_remove_duplicated_job(target):
         
