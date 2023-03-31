@@ -177,7 +177,8 @@ class LogicRss(object):
             LogicRss.scheduler_function_remove_history()
         if ModelSetting.get_bool('remove_cloud_history_on_web'):
             LogicRss.scheduler_function_remove_cloud_history('cloud')
-
+        if ModelSetting.get_bool('alt_download'):
+            LogicRss.scheduler_function_alt_download('remote')
     # status
     # 0 : 초기 값
     # 1 : 마그넷. 캐쉬. 오버
@@ -257,7 +258,36 @@ class LogicRss(object):
             logger.error(e)
             logger.error(traceback.format_exc())        
 
+    @staticmethod
+    def scheduler_function_alt_download(target):
+        try:
+            from downloader.logic import Logic
+            from downloader.logic_normal import LogicNormal
+            LogicNormal.program_init()
+            get_default_value = Logic.get_default_value()
+            apikey = ModelSetting.get('apikey')
+            history_status = Offcloud.get_history(apikey, target)
+            history_status = history_status['history_status']
+            if len(history_status) != 0:
+                for remote_item in history_status:      
+                    remote_magnet = str(remote_item.get('originalLink')).strip()
+                    try:
+                        if (remote_item.get('status') != 'uploading') and int(remote_item.get('downloadingTime')) > (ModelSetting.get_int('alt_download_time')*3600*1000) and remote_item.get('downloadingSpeed') == None :
+                            Logic.add_download2(remote_magnet, get_default_value[0], get_default_value[1])
+                            item = remote_item.get('requestId')
+                            result = Offcloud.remove(apikey, target, item)
+                            logger.debug('다운로드 중지됨 - removed : %s === %s', result, item)
+                        elif (remote_item.get('status') == 'uploading') and ModelSetting.get_int('alt_upload_time') > 0 and int(remote_item.get('downloadingTime')) > (ModelSetting.get_int('alt_upload_time')) :
+                            Logic.add_download2(remote_magnet, get_default_value[0], get_default_value[1])
+                            item = remote_item.get('requestId')
+                            result = Offcloud.remove(apikey, target, item)
+                            logger.debug('업로드 중지됨 - removed : %s === %s', result, item)                                
+                    except: 
+                        continue
 
+        except Exception as e:
+            logger.error(e)
+            logger.error(traceback.format_exc())   
     @staticmethod
     def scheduler_function_remove_duplicated_job(target):
         
