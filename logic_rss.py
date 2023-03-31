@@ -277,7 +277,7 @@ class LogicRss(object):
                             item = remote_item.get('requestId')
                             result = Offcloud.remove(apikey, target, item)
                             logger.debug('다운로드 중지됨 - removed : %s === %s', result, item)
-                        elif (remote_item.get('status') == 'uploading') and ModelSetting.get_int('alt_upload_time') > 0 and int(remote_item.get('downloadingTime')) > (ModelSetting.get_int('alt_upload_time')) :
+                        elif (remote_item.get('status') == 'uploading') and ModelSetting.get_int('alt_upload_time') > 0 and int(remote_item.get('downloadingTime')) > (ModelSetting.get_int('alt_upload_time')*3600*1000) :
                             Logic.add_download2(remote_magnet, get_default_value[0], get_default_value[1])
                             item = remote_item.get('requestId')
                             result = Offcloud.remove(apikey, target, item)
