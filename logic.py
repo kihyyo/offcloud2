@@ -49,7 +49,7 @@ class Logic(object):
         # 20230331 새로 추가
         'alt_download' : 'False',
         'alt_download_time' : '4', 
-        'alt_upload_time' : '12',
+        'alt_upload' : '',
         # cache
         'cache_save_type_list' : '',
         'cache_receive_info_send_telegram' : 'False'
