@@ -22,7 +22,7 @@
       {{ macros.setting_checkbox('dedupe_on_cloud', 'Cloud 중복 작업 제거', value=arg['dedupe_on_cloud'], desc=None) }}
       {{ macros.setting_checkbox('alt_download', '중지된 목록 다운로드 클라이언트로', value=arg['alt_download'], desc='지정한 시간이 넘고 다운로드 속도가 없으면 다운로드 스테이션으로 마그넷 넘깁니다') }}
       {{ macros.setting_input_int('alt_download_time', '다운로드 중지 판정시간', value=arg['alt_download_time'], desc=['hours', '']) }}
-      {{ macros.setting_input_int('alt_upload_time', '업로드 중지 판정시간', value=arg['alt_upload_time'], desc=['hours', '다운로드 포함한 시간, 0이면 업로드 중인건 삭제하지 않음']) }}
+      {{ macros.setting_checkbox('alt_upload', '업로드 중지된 것도 넘김', value=arg['alt_upload'], desc='업로드 시간이 넘은 것 처리. off: 그냥 삭제, on: 넘김') }}
       {{ macros.setting_button([['global_setting_save_btn', '설정 저장']]) }}
     {{ macros.m_tab_content_end() }}
       
