@@ -18,14 +18,13 @@ from sqlalchemy.sql.expression import null
 # sjva 공용
 from framework import db, scheduler, path_app_root, SystemModelSetting, celery, app, Util
 from framework.job import Job
-from framework.common.rss import RssUtil
 import framework.common.celery as celery_task
 
 # 패키지
 from .plugin import logger, package_name
 from .model import ModelSetting, ModelOffcloud2Account, ModelOffcloud2Job,  ModelOffcloud2Item, ModelOffcloud2Cache
 from .offcloud_api import Offcloud
-
+from .rss_nyaa import RssUtil
 #########################################################
 
 
