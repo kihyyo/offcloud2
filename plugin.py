@@ -255,7 +255,7 @@ def api(sub):
                 item['link'] = t.link
                 item['created_time'] = t.created_time
                 data.append(item)
-            from framework.common.rss import RssUtil
+            from .rss_nyaa import RssUtil
             xml = RssUtil.make_rss(package_name, data)
             return Response(xml, mimetype='application/xml')
         elif sub == 'cache':
@@ -267,7 +267,7 @@ def api(sub):
                 item['link'] = t.magnet
                 item['created_time'] = t.created_time
                 data.append(item)
-            from framework.common.rss import RssUtil
+            from .rss_nyaa import RssUtil
             xml = RssUtil.make_rss(package_name, data)
             return Response(xml, mimetype='application/xml')
         elif sub == 'hash':
