@@ -12,7 +12,7 @@ import threading
 from framework import db, scheduler, path_app_root
 from framework.job import Job
 from framework.util import Util
-from framework.common.rss import RssUtil
+from .rss_nyaa import RssUtil
 
 # 패키지
 from .plugin import logger, package_name
