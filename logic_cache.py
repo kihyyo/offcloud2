@@ -16,7 +16,7 @@ from sqlalchemy import or_, and_, func, not_
 from framework import db, scheduler, path_app_root, SystemModelSetting
 from framework.job import Job
 from framework.util import Util
-from framework.common.rss import RssUtil
+from .rss_nyaa import RssUtil
 from tool_base import ToolBaseNotify
 
 # 패키지
